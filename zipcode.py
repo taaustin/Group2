@@ -23,7 +23,7 @@ class Zipcode():
         if self.geometry.intersects(zipcode.geometry):
             self.neighbors.append(zipcode)
             zipcode.neighbors.append(self)
-            print("Neighbor Found")
+            #print("Neighbor Found")
 
     #Print information on a zipcode
     def printInformation(self):

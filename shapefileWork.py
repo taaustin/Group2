@@ -19,7 +19,6 @@ def readShapefile():
 
 #used to sort the list of zipcodes from east to west
 def sortCentroid(e):
-    print(str(e.centroid))
     return str(e.centroid)
 
 #Creates objects, see zipcode.py for class details, uses class function to check for neighbors
@@ -39,13 +38,25 @@ def createZipObjects(data):
     zipcodeList.sort(key=sortCentroid)
     return zipcodeList
 
+def searchForZip(zipcodeToSearchFor, zipcodes):
+    for zipcode in zipcodes:
+        if zipcode.zip == zipcodeToSearchFor:
+            return zipcode
+    print("Zip not found")
+    return
+
 #Main function
 def main():
+    print("Please wait, loading shapefile data...")
     data = readShapefile()
     zipcodes = createZipObjects(data)
-    zipcodes[0].printInformation() #first in list, furthest east, Ocean City
-    zipcodes[len(zipcodes)-1].printInformation() # last in list, furthest west, Western MD
-
+    #zipcodes[0].printInformation() #first in list, furthest east, Ocean City
+    #zipcodes[len(zipcodes)-1].printInformation() # last in list, furthest west, Western MD
+    zipcodeToSearchFor = input("Search for a zipcode, enter it here: ")
+    searchResults = searchForZip(zipcodeToSearchFor, zipcodes)
+    print("\nYou're searched returned:\n")
+    searchResults.printInformation()
+    
 
 if __name__ == "__main__": 
     # calling main function 
