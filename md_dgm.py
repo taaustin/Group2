@@ -96,7 +96,8 @@ class MD_DGM_APP:
     def Warning_Window(self, *args):
         window = self.builder.get_object("warning_window")
         label = self.builder.get_object("event_content")
-
+        self.fileName = args[0]
+        
         text_str = "Data has already been generated and is unsaved, this\nwill overwrite the data in \"" + args[0] + "\"\n\nDo you want to continue?"
         
         label.set_label(text_str)
@@ -105,37 +106,46 @@ class MD_DGM_APP:
     # Exit warning window and signify to not overwrite
     def on_warning_quit_clicked(self, *args):
         window = self.builder.get_object("warning_window")
-        self.confirm_warning = False
         window.hide()
 
     # Exit warning window and signify overwrite
     def on_warning_continue_clicked(self, *args):
         window = self.builder.get_object("warning_window")
-        self.confirm_warning = True
+        files = self.builder.get_object("files")
+        
+        for file in files:
+            if file.get_label() == self.fileName:
+                files.remove(file)
+
+        link = Gtk.LinkButton(label=self.fileName, uri=self.fileName)
+        link.connect("clicked", self.Map_Window, self.fileName)
+        link.show()
+        files.add(link)
+        
         window.hide()
 
     # Generate map of ZCTA's, will eventually call main.py as opposed to
     # just using the file it generated
     def on_zcta_map_button_clicked(self, *args):
         files = self.builder.get_object("files")
-        window = self.builder.get_object("warning_window")
-
-        # Determine whether to overwrite the file,
-        # this is what currently has a bug
+        overwrite_warning = False
+        fileName = ""
+        
+        # Determine whether to overwrite the file
         fileList = files.get_children()
         for file in fileList:
             if file.get_label() == "test.gif":
-                self.Warning_Window("test.gif")
-                if (self.confirm_warning):
-                    files.remove(file)
-                else:
-                    return
+                overwrite_warning = True
+                fileName = file.get_label()
 
-        # Display link to map window
-        link = Gtk.LinkButton(label="test.gif", uri="test.gif")
-        link.connect("clicked", self.Map_Window, "test.gif")
-        link.show()
-        files.add(link)
+        # Display link to map window or display waring window
+        if overwrite_warning:
+            self.Warning_Window(fileName)
+        else:
+            link = Gtk.LinkButton(label="test.gif", uri="test.gif")
+            link.connect("clicked", self.Map_Window, "test.gif")
+            link.show()
+            files.add(link)
 
 def main():
     app = MD_DGM_APP()
