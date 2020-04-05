@@ -1,19 +1,15 @@
 '''
 # Filename : md_dgm.py
 # Description : This file uses the Gtk to provide an interactive
-#               user interface for our users. 
-#
-# Important Notes : It must be run with python3. The "Zoom In" and 
-#                   "Zoom out" buttons have not yet been implemented.
-#                    The save map feature has not be programed to save 
-#                    the file yet, although this will be easy to do.
-#                    There is also a bug when displaying the "warning
-#                    window" that is documented in backlog.  
+#               user interface for our users.  
 '''
 
+import sys
+import shutil
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GdkPixbuf
+from gi.repository import Gtk, GdkPixbuf, GLib
+from PIL import Image
 
 class MD_DGM_APP:
     # Initialize the home window from 'design_format.glade'
@@ -58,8 +54,15 @@ class MD_DGM_APP:
     def on_map_delete(self, *args):
         map_img = self.builder.get_object("map_img")
         imgList = map_img.get_children()
-        map_img.remove(imgList[0])
+        for item in imgList:
+            map_img.remove(item)
 
+
+    def on_close_msg_box(self, *args):
+        map_img = self.builder.get_object("map_img")
+        imgList = map_img.get_children()
+        map_img.remove(imgList[1])
+    
     # Creates a dialog that allows a user to specify a folder and filename
     # to which they wish to save the image file
     def on_map_save_clicked(self, *args):
@@ -75,21 +78,76 @@ class MD_DGM_APP:
         dialog.set_current_name("test.gif")
         
         response = dialog.run()
-        log = self.builder.get_object("user_log")
+        map_img = self.builder.get_object("map_img")
+        if (len(map_img.get_children()) < 2):
+            box = Gtk.HBox(spacing=10)
+            box.set_halign(Gtk.Align.START)
+            box.set_valign(Gtk.Align.END)
+
+            btn = Gtk.Button.new_from_icon_name(icon_name=Gtk.STOCK_CLOSE, size=0)
+            btn.connect("clicked", self.on_close_msg_box)
+            box.pack_start(child=btn, expand=False, fill=False, padding=0)
+            
+            msg = Gtk.Label()
+            box.pack_end(child=msg, expand=False, fill=False, padding=0)
+            
+            map_img.add_overlay(box)
+        else:
+            box = map_img.get_children()[1]
+            msg = box.get_children()[1]
+            
         if response == Gtk.ResponseType.OK:
-            text = "File saved to " + dialog.get_filename()
-            log.set_label(text)
-        elif response == Gtk.ResponseType.CANCEL:
-            log.set_label("Canceled: File not saved")
+            text = "Image saved to " + dialog.get_filename()
+            msg.set_label(text)
 
+            try:
+                shutil.copyfile("test.gif", dialog.get_filename())
+            except:
+                text = "Error: " + str(sys.exc_info()[0])
+                msg.set_label(text)
+                
+        else:
+            msg.set_label("Canceled: Image not saved")
+
+        box.show_all()
         dialog.destroy()
-
 
     # Not yet implemented
     def on_map_zoomIn_clicked(self, *args):
-        return
+        map_img = self.builder.get_object("map_img")
+        img = map_img.get_children()[0]
+        width = img.get_pixbuf().get_width()
+        height = img.get_pixbuf().get_height()
+        
+        if width < 4500:
+            width += 1000
+            height += 350
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file("test.gif")
+            pixbuf = pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
+            image = Gtk.Image()
+            image.set_from_pixbuf(pixbuf)
+            for item in map_img.get_children():
+                map_img.remove(item)
+            map_img.add(image)
+            map_img.show_all()
+        
     def on_map_zoomOut_clicked(self, *args):
-        return
+        map_img = self.builder.get_object("map_img")
+        img = map_img.get_children()[0]
+        width = img.get_pixbuf().get_width()
+        height = img.get_pixbuf().get_height()
+        
+        if width > 1500:
+            width -= 1000
+            height -= 350
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file("test.gif")
+            pixbuf = pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
+            image = Gtk.Image()
+            image.set_from_pixbuf(pixbuf)
+            for item in map_img.get_children():
+                map_img.remove(item)
+            map_img.add(image)
+            map_img.show_all()
 
     # Display a warning when the user wishes to generate a map that
     # that has already been generated this session. 
