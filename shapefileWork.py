@@ -11,8 +11,7 @@ from shapely.geometry import Polygon
 from zipcode import Zipcode
 
 #read the shapefile found in the directory provided
-def readShapefile():
-    filepath = "./MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
+def readShapefile(filepath):
     #read file
     data = gpd.read_file(filepath)
     return data
