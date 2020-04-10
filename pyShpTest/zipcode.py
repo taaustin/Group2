@@ -17,26 +17,50 @@ class Zipcode():
         self.centroid = Polygon(geometry).centroid
         #self.centroid = centroid
         self.neighbors = []
+        self.checked = False
+        self.added = False
+        self.listIndex = 0
         self.district = 0 #this will get set when dividing starts
+
+
+    def checkNeighbors(self, zipcodeList, zipcodeIndex):
+        i = zipcodeIndex
+        loopindex = zipcodeIndex
+        print("Entered checkNeighbors() with " + self.zip + " at index " + str(i))
+        if self.polyGeo.is_valid == False:
+            self.polyGeo = self.polyGeo.buffer(0)
+        print("start for loop")
+        if loopindex >= len(zipcodeList)-5:
+            loopindex = len(zipcodeList) - 5
+        for zipcode in zipcodeList[loopindex:loopindex+5]:
+            if zipcode.checked == False and zipcode.zip != self.zip:
+                print("Sending " + zipcode.zip + " to checkIntersection()")
+                self.checkIntersection(zipcode)
+                zipcode.listIndex = i
+            i = i+1
+        self.checked = True
+        print("Finished checkNeighbors()")
+        return
 
     #uses shapely's 'intersects' function to add neighbors to the objects list of neighbors
     #the intersects function takes two geometries (aka 2 zipcodes outline coordinates) and 
     #returns true or false if they touch
-    def checkNeighbors(self, zipcode):
-        #self.polyGeo = self.polyGeo.buffer(0)
-        #zipcode.polyGeo = zipcode.polyGeo.buffer(0)
-        #if zipcode.polyGeo.is_valid and self.polyGeo.is_valid:
+    def checkIntersection(self, zipcode):
+        print("entered checkIntersection(), checking intersection between " + self.zip + " and " + zipcode.zip)
+        if zipcode.polyGeo.is_valid == False:
+            zipcode.polyGeo = zipcode.polyGeo.buffer(0)
         if self.polyGeo.intersects(zipcode.polyGeo):
             self.neighbors.append(zipcode)
             zipcode.neighbors.append(self)
             print("Neighbor Found")
-        else:
-            self.polyGeo = self.polyGeo.buffer(0)
-            zipcode.polyGeo = zipcode.polyGeo.buffer(0)
-            if self.polyGeo.intersects(zipcode.polyGeo):
-                self.neighbors.append(zipcode)
-                zipcode.neighbors.append(self)
-                print("Neighbor Found")
+
+        #else:
+        #    self.polyGeo = self.polyGeo.buffer(0)
+        #    zipcode.polyGeo = zipcode.polyGeo.buffer(0)
+        #    if self.polyGeo.intersects(zipcode.polyGeo):
+        #        self.neighbors.append(zipcode)
+        #        zipcode.neighbors.append(self)
+        #        print("Neighbor Found")
         #    return
 
     #Print information on a zipcode
@@ -48,3 +72,14 @@ class Zipcode():
         print("Neighbors: ")
         for neighbor in self.neighbors:
             print(neighbor.zip)
+
+    def printDistrict(self, zipcodeList):
+        count =0
+        pop = 0
+        for zipcode in zipcodeList:
+            if self.district == zipcode.district:
+                print(zipcode.zip + "    " + str(zipcode.population))
+                count = count + 1
+                pop = pop + zipcode.population
+        print("Total of " + str(count) + " zip codes in District " + str(self.district))
+        print("District population = " + str(pop))
