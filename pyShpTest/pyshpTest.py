@@ -1,5 +1,5 @@
 import shapefile
-from zipcode import Zipcode
+from zipcode import ZipCode
 
 
 def getShapes(shFile):
@@ -28,7 +28,7 @@ def createZipObjects(shapes, records):
         zip = records[i]["ZCTA5CE10"]
         population = records[i]["POP100"]
         geometry = zipcode.points       
-        zipObj = Zipcode(zip, population, geometry)#, centroid)
+        zipObj = ZipCode(zip, population, geometry)#, centroid)
         zipcodeList.append(zipObj)
         i = i+1
     zipcodeList.sort(key=sortCentroid)

@@ -1,15 +1,15 @@
 # Filname: zipcode.py
-# Overiview: class code for a 'Zipcode'
+# Overiview: class code for a 'ZipCode'
 # Written by: Todd Austin
 # Date: 3/26/2020
 # 
-# Purpose: Used for objects of class Zipcode, includes class functions to print information and check
+# Purpose: Used for objects of class ZipCode, includes class functions to print information and check
 # for zipcode neighbors.
 
 from shapely.geometry import Polygon
 from shapely.geometry import MultiPolygon
 
-class Zipcode():
+class ZipCode():
     def __init__(self, zip, population, geometry):#, centroid): # have to include centroid again for geopandas
         self.zip = zip
         self.population = population
@@ -76,7 +76,7 @@ class Zipcode():
 
     #Print information on a zipcode
     def printInformation(self):
-        print("Zipcode = " + self.zip)
+        print("ZipCode = " + self.zip)
         print("Population = " + str(self.population))
         print("Centroid = " + str(self.centroid))
         print("District = " + str(self.district))

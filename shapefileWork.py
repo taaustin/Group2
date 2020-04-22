@@ -3,12 +3,12 @@
 # Written by: Todd Austin
 # Date: 3/26/2020
 # 
-# Purpose: Used to read shapefile, and create objects of class Zipcode
+# Purpose: Used to read shapefile, and create objects of class ZipCode
 # then generates a list of these zipcode objects sorted from East to West. 
 
 import geopandas as gpd
 from shapely.geometry import Polygon
-from zipcode import Zipcode
+from zipcode import ZipCode
 
 #read the shapefile found in the directory provided
 def readShapefile(filepath):
@@ -24,7 +24,7 @@ def sortCentroid(e):
 def createZipObjects(data):
     zipcodeList = []
     for index,row in data.iterrows():
-        zipObj = Zipcode(row["ZCTA5CE10"], row["POP100"], row["geometry"].centroid, row["geometry"])
+        zipObj = ZipCode(row["ZCTA5CE10"], row["POP100"], row["geometry"].centroid, row["geometry"])
         zipcodeList.append(zipObj)
     for zipcode in zipcodeList:   
         for zipcode2 in zipcodeList:

@@ -1,6 +1,5 @@
 import shapefile
-from zipcode import Zipcode
-from collections import defaultdict
+from zipcode import ZipCode
 
 def getShapes(shFile):
     shfile = shapefile.Reader(shFile)
@@ -46,11 +45,11 @@ def createZipObjects(shapes, records):
         
         coordShapes.append(parts)
 
-    # build Zipcode objects from the geomerty and records
+    # build ZipCode objects from the geomerty and records
     for shape, record in zip(coordShapes, records):
         zcta = record["ZCTA5CE10"]
         pop = record["POP100"]
-        zipObj = Zipcode(zcta, pop, shape)
+        zipObj = ZipCode(zcta, pop, shape)
         zipcodeList.append(zipObj)
 
     zipcodeList.sort(key=sortCentroid, reverse=True)
