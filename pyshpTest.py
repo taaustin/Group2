@@ -1,6 +1,6 @@
 import shapefile
 from zipcode import Zipcode
-
+from collections import defaultdict
 
 def getShapes(shFile):
     shfile = shapefile.Reader(shFile)
@@ -13,7 +13,7 @@ def getRecords(shFile):
     return records
 
 def sortCentroid(e):
-    return str(e.centroid.x)
+    return str(e.centroid[0])
 
 def getTotalPopulation(zipcodeList):
     total = 0
@@ -23,16 +23,39 @@ def getTotalPopulation(zipcodeList):
 
 def createZipObjects(shapes, records):
     zipcodeList = []
-    i = 0
-    for zipcode in shapes:
-        zip = records[i]["ZCTA5CE10"]
-        population = records[i]["POP100"]
-        geometry = zipcode.points       
-        zipObj = Zipcode(zip, population, geometry)#, centroid)
+    
+    # convert shapes to a list(list(list(coordinates)))
+    # zipcodes(shapes(coordinates))
+    coordShapes = []
+
+    # split the points into parts
+    for shape in shapes:
+        parts = []
+
+        if len(shape.parts) > 1:
+            # multiple parts, split and add each
+            start = shape.parts[0]
+            
+            for partIndex in shape.parts[1:]:
+                part = shape.points[start:partIndex]
+                parts.append(part)
+                start = partIndex      
+        else:
+            # Only one part, add entire list
+            parts.append(shape.points)
+        
+        coordShapes.append(parts)
+
+    # build Zipcode objects from the geomerty and records
+    for shape, record in zip(coordShapes, records):
+        zcta = record["ZCTA5CE10"]
+        pop = record["POP100"]
+        zipObj = Zipcode(zcta, pop, shape)
         zipcodeList.append(zipObj)
-        i = i+1
+
     zipcodeList.sort(key=sortCentroid, reverse=True)
     return zipcodeList
+
 
 def startSplit(totalPopulation, zipcodeList):
     print("Entered startSplit()")
@@ -125,12 +148,11 @@ def printDistrictDetails(zipcodeList):
     print("Other: " + str(otherCount))
     
 
-
 def main():
     shFile = "./MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
     shapes = getShapes(shFile)
     records = getRecords(shFile)
-    zipcodeList = createZipObjects(shapes,records)
+    zipcodeList = createZipObjects(shapes, records)
     totalPopulation = getTotalPopulation(zipcodeList)
     startSplit(totalPopulation, zipcodeList)
     printDistrictDetails(zipcodeList)

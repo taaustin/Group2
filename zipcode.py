@@ -7,21 +7,32 @@
 # for zipcode neighbors.
 
 from shapely.geometry import Polygon
+from shapely.geometry import MultiPolygon
+
 class Zipcode():
     def __init__(self, zip, population, geometry):#, centroid): # have to include centroid again for geopandas
         self.zip = zip
         self.population = population
-        
         self.geometry = geometry
-        self.polyGeo = Polygon(geometry)
-        self.centroid = Polygon(geometry).centroid
+
+        polygons = [Polygon(p) for p in geometry]
+
+        self.polyGeo = MultiPolygon(polygons)
+        self.centroid = [self.polyGeo.centroid.x, self.polyGeo.centroid.y]
+        bbox = self.polyGeo.bounds
+        
+        self.bounds = bbox #(bbox[0], bbox[1], bbox[2], bbox[3])
+
         #self.centroid = centroid
         self.neighbors = []
         self.checked = False
         self.added = False
         self.listIndex = 0
         self.district = 0 #this will get set when dividing starts
-
+        self.color = (0,0,0)
+        #print(type(geometry[0]))
+        #print(geometry[0])
+        #exit()
 
     def checkNeighbors(self, zipcodeList, zipcodeIndex):
         i = zipcodeIndex

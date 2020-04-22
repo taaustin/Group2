@@ -1,146 +1,145 @@
+# Filname: ziprender.py
+# Overiview: Renders ZipCode objects
+# Written by: Dennis Dove
+# Date: 4/22/2020
+# 
+# Purpose: Provides a set of functions that facilitate rendering of ZipCode objects to Pillow Image objects.
+
 import os
 import math
 from PIL import Image
 from PIL import ImageOps
 from PIL import ImageDraw
-import random
+from random import randint
 import pyshpTest
-import shapely.geometry
 
 def makeTranslator(offsetX, offsetY, scale):
-    def translate(x, y):
-        return [(x + offsetX) * scale, (y + offsetY) * scale]
+    '''Gets a function that performs a translate and a scale on coordinates.
+       :param offsetX: the x-coordinate translation
+       :param offsetY: the y-coordinate translation
+       :param scale: the scaling factor to apply
+       :return: a function(x,y) that will transform the x and y coordinates and return an array [x,y].'''
+    def translate(xy):
+        return ((xy[0] + offsetX) * scale, (xy[1] + offsetY) * scale)
     return translate
 
 
-def fatoia(floats):
-    for i in range(len(floats)):
-        floats[i] = int(math.ceil(floats[i]))
-    return floats
+def getBoundingBox(boundingBoxes):
+    '''Gets a bounding box that contains all of the given bounding boxes.
+       :param boundingBoxes: a List of (minx, miny, maxx, maxy) bounding boxes.
+       :return: a (minx, miny, maxx, maxy) bounding box'''
+    # start with the first box
+    # convert to list so the elements can be changed
+    ret = list(boundingBoxes[0])
+
+    # expand the box to fit each subsequent box
+    for box in boundingBoxes:
+        if box[0] < ret[0]:
+            ret[0] = box[0]
+        if box[1] < ret[1]:
+            ret[1] = box[1]   
+        if box[2] > ret[2]:
+            ret[2] = box[2]    
+        if box[3] > ret[3]:
+            ret[3] = box[3]
+
+    return tuple(ret)
 
 
+def randomColors(count):
+    '''Builds a list of random RGB tuples.
+       :param count: the number of colors to generate.
+       :return: a list of RGB tuples.'''
+    return [(randint(0, 255), randint(0, 255), randint(0, 255)) for n in range(count)]
+
+
+def colorByDistrict(zips, colors, radius=0):
+    '''Applies a color to each ZCTA based on district number.
+       :param zips: a list of ZipCode objects
+       :param colors: a list of RGB tuples
+       :param radius: an optional amount of maximum shift to apply to each ZCTA'''
+    if radius == 0:
+        # simple assignment
+        for zcta in zips:
+            zcta.color = colors[zcta.district-1]
+    else:
+        # modify RGB by the same random amount per ZCTA
+        for zcta in zips:
+            offset = randint(-radius, radius)
+            zcta.color = tuple(a + offset for a in colors[zcta.district-1])
+
+
+def colorByZip(zips, colors):
+    '''Applies a color to each ZCTA based on ZIP code.
+       :param zips: a list of ZipCode objects
+       :param colors: a list of RGB tuples'''
+    for zcta in zips:
+        zcta.color = colors[int(zcta.zip) % len(colors)]  # [0-1329]
+
+
+def colorHtmlToRgb(color):
+    '''Converts an hex HTML color code to an RGB tuple.
+       :param color: a hexadecimal HTML color code (e.g. #a0ebe7)
+       :return: an RGB tuple'''
+    # from https://stackoverflow.com/questions/29643352/converting-hex-to-rgb-value-in-python
+    h = color.lstrip('#')
+    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
+
+def renderZipCodes(zips, scale, background='black'):
+    '''Renders a list of ZipCode objects to a new PIL.Image.
+       :param zips: a list of ZipCode objects
+       :param scale: a scaling factor for the output
+       :param background: the background color for the image
+       :return: a PIL.Image object with the rendered map.'''
+    print("Rendering zip codes...")
+
+    # Get a bounding box for all geometry
+    boxList = [z.bounds for z in zips]
+    boxAll = getBoundingBox(boxList)
+
+    # construct a translation function
+    translate = makeTranslator(-boxAll[0], -boxAll[1], scale)
+    imageSize = tuple(math.ceil(t) for t in translate(boxAll[2:]))
+
+    print("Image size:", imageSize)
+
+    img = Image.new('RGB', imageSize, background)
+    draw = ImageDraw.Draw(img)
+
+    for z in zips:
+        for poly in z.geometry:
+            points = [translate(p) for p in poly]
+            draw.polygon(points, z.color, z.color)
+    
+    # flip image vertically
+    return ImageOps.flip(img)
+
+
+########################################################################
+# THIS SHOULD BE CALLED ELSEWHERE
+# All of this work should be done by the caller to renderZipCodes
+# 1. Read in shapefile
+# 2. Split by population
+# 3. Apply color
+# 3. Render
+# 4. Show/Save
+########################################################################
 shpPath = os.path.join('MDdata',
                        'Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp')
 
 print("Reading shapefile...")
 shapes = pyshpTest.getShapes(shpPath)
 records = pyshpTest.getRecords(shpPath)
-zipcodeList = pyshpTest.createZipObjects(shapes,records)
+zipcodeList = pyshpTest.createZipObjects(shapes, records)
 totalPopulation = pyshpTest.getTotalPopulation(zipcodeList)
 pyshpTest.startSplit(totalPopulation, zipcodeList)
-#data = shapefileWork.readShapefile(shpPath)
-#zips = shapefileWork.createZipObjects(data)
 
-print("Processing...")
+# customColors = ['#4287f5', '#4287f5', '#dea350', '#c7d437', '#27de16', '#a0ebe7', '#9d25a1', '#918e90']
+# colorByDistrict(zipcodeList, [colorHtmlToRgb(h) for h in customColors], 15)
+colorByDistrict(zipcodeList, randomColors(8), 15)
+# colorByZip(zipcodeList, randomColors(len(zipcodeList)))
 
-t = zipcodeList[0].centroid.y
-b = zipcodeList[0].centroid.y
-l = zipcodeList[0].centroid.x
-r = zipcodeList[0].centroid.x
-
-print("Calculating bounding box...")
-
-# build a bounding box
-for z in zipcodeList:
-    if z.centroid.x < l:
-        l = z.centroid.x
-    if z.centroid.x > r:
-        r = z.centroid.x
-    if z.centroid.y < t:
-        t = z.centroid.y
-    if z.centroid.y > b:
-        b = z.centroid.y
-
-print(l,t,r,b)
-
-# construct a translation function
-scale = 2000
-tf = makeTranslator(-l, -t, scale)
-size = fatoia(tf(r, b))
-print("Bouding box:", size)
-
-img = Image.new('RGB', (size[0] + 100, size[1] + 100), 'black')
-pixels = img.load()
-mdColors = [(224, 58, 62), (255, 213, 32)]
-colors = ['#4287f5', '#4287f5', '#dea350', '#c7d437', '#27de16', '#a0ebe7', '#9d25a1', '#918e90']
-
-#for i in range(1330):
-#    randColors.append((
-#        random.randint(10, 250),
-#        random.randint(10, 250),
-#        random.randint(10, 250)
-#    ))
-
-for z in zipcodeList:
-    # calculate middle point
-    # center = fatoia(tf(z.centroid.x, z.centroid.y))
-
-    # invert Y axis
-    #center[1] = img.size[1] - center[1]
-
-    # print each record
-    # print('ZCTA={0:5} POP={1:5} CENTER={2}'.format(
-    #     z.zip,
-    #     z.population,
-    #     center
-    # ))
-
-    # color = mdColors[random.randint(0, 1)]
-    #color = randColors[int(z.zip) - 20601]  # [0-1329]
-    if z.district == 1:
-        color = colors[0]
-    elif z.district == 2:
-        color = colors[1]
-    elif z.district == 3:
-        color = colors[2]
-    elif z.district == 4:
-        color = colors[3]
-    elif z.district == 5:
-        color = colors[4]
-    elif z.district == 6:
-        color = colors[5]
-    elif z.district == 7:
-        color = colors[6]
-    elif z.district == 8:
-        color = colors[7]
-    rad = scale // 150
-    # for x in range(center[0] - rad, center[0] + rad):
-    #     for y in range(center[1] - rad, center[1] + rad):
-    #         if x > 0 and y > 0 and x < img.size[0] and y < img.size[1]:
-    #             pixels[x, y] = color
-
-    draw = ImageDraw.Draw(img)
-    #sq = [center[0] - rad, center[1] - rad, center[0] + rad, center[1] + rad]
-    #draw.rectangle(sq, color, color)
-    # draw.text(
-    #     (center[0] + rad, center[1] + rad),  z.zip + ' ' + str(z.population))
-    # draw.polygon(z.geometry, color, color)
-    
-    if type(z.polyGeo) == shapely.geometry.MultiPolygon:
-        for poly in z.polyGeo:
-            points = list(poly.exterior.coords)
-            points = [tuple(tf(p[0], p[1])) for p in points]
-            #print(points)
-            draw.polygon(points, color, color)
-    elif type(z.polyGeo) == shapely.geometry.Polygon:
-            points = list(z.polyGeo.exterior.coords)
-            points = [tuple(tf(p[0], p[1])) for p in points]
-            #print(points)
-            draw.polygon(points, color, color)
-    else:
-        print("Unknown geometry type:", type(z.polyGeo))
-
-    # exit()
-
-# flip image vertically
-
-a = 1
-b = 0
-c = -l #left/right (i.e. 5/-5)
-d = 0
-e = 1
-f = -t #up/down (i.e. 5/-5)
-# img = img.transform(img.size, Image.AFFINE, (a, b, c, d, e, f))
-img = ImageOps.flip(img)
+img = renderZipCodes(zipcodeList, scale=2000)
 img.show()
 # img.save('test.gif')
