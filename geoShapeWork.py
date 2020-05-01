@@ -117,8 +117,8 @@ def createZipObjects(data):
                     continue
                 else:
                     zipcode.checkNeighbors(zipcode2)
-    totalPopulation = getTotalPopulation(zipcodeList)                
-    zipcodeList.sort(reverse=True, key=lambda z: z.centroid.x) #sorted east to west
+    #totalPopulation = getTotalPopulation(zipcodeList)                
+    #zipcodeList.sort(reverse=True, key=lambda z: z.centroid.x) #sorted east to west
     #createDistricts(zipcodeList, totalPopulation) #<<<<<---------------------------------------------
     return zipcodeList
 

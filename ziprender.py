@@ -46,11 +46,11 @@ def getBoundingBox(boundingBoxes):
     return tuple(ret)
 
 
-def randomColors(count):
+def randomColors(count, min=0, max=255):
     '''Builds a list of random RGB tuples.
        :param count: the number of colors to generate.
        :return: a list of RGB tuples.'''
-    return [(randint(0, 255), randint(0, 255), randint(0, 255)) for n in range(count)]
+    return [(randint(min, max), randint(min, max), randint(min, max)) for n in range(count)]
 
 
 def colorByDistrict(zips, colors, radius=0):
@@ -62,6 +62,7 @@ def colorByDistrict(zips, colors, radius=0):
         # simple assignment
         for zcta in zips:
             zcta.color = colors[zcta.district-1]
+            zcta.centroidColor = tuple(a + 75 for a in zcta.color)
     else:
         # modify RGB by the same random amount per ZCTA
         for zcta in zips:
@@ -70,7 +71,7 @@ def colorByDistrict(zips, colors, radius=0):
             # else:
             offset = randint(-radius, radius)
             zcta.color = tuple(a + offset for a in colors[zcta.district-1])
-            
+            zcta.centroidColor = tuple(a + 75 for a in zcta.color)
 
 
 def colorByZip(zips, colors):
@@ -79,7 +80,7 @@ def colorByZip(zips, colors):
        :param colors: a list of RGB tuples'''
     for zcta in zips:
         zcta.color = colors[int(zcta.zip) % len(colors)]  # [0-1329]
-
+        zcta.centroidColor = tuple(a + 75 for a in zcta.color)
 
 def colorHtmlToRgb(color):
     '''Converts an hex HTML color code to an RGB tuple.
@@ -112,9 +113,18 @@ def renderZipCodes(zips, scale, background='black'):
     draw = ImageDraw.Draw(img)
 
     for z in zips:
+        # fill background
         for poly in z.geometry:
             points = [translate(p) for p in poly]
-            draw.polygon(points, z.color, z.color)
+            draw.polygon(points, z.color)
+
+        # dot at center
+        r = 2
+        center = translate((z.centroid.x, z.centroid.y))
+        tlbr = (center[0] - r, center[1] - r, center[0] + r, center[1] + r)        
+        draw.ellipse(tlbr, z.centroidColor)
+        # draw.text(center, z.zip, z.centroidColor)
+        
     
     # flip image vertically
     return ImageOps.flip(img)

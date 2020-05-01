@@ -67,13 +67,14 @@ def getNeighborhood(zip, neighborhood, allZips):
 def cluster():
     k = 8
     filepath = "./MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
-    print("Please wait, loading shapefile data...")
+    print("Reading shapefile...")
     data = readShapefile(filepath)
+    print("Creating zip objects...")
     zipcodes = createZipObjects(data)
     totalPop = getTotalPopulation(zipcodes)
     targetPop = totalPop / k
     output = []
-
+    
     print('Target district pop:', targetPop)
     
     zipcodes = createConnectedGraph(zipcodes)
@@ -86,7 +87,7 @@ def cluster():
     queue.append(zipcodes[0])
     print(f'Starting district from {zipcodes[0].zip} (seed)...')
 
-    while len(queue) > 0:
+    while len(queue) > 0 and currDistrict < k:
         if len(districts[currDistrict][1]) == 0:
             # nothing to compare against
             curr = queue.pop(0)
@@ -136,15 +137,26 @@ def cluster():
             queue.append(zipcodes[0])
             print(f'Starting district from {zipcodes[0].zip} (continuity)...')
     
+    # add any remaining zips to nearest district
+    # districtBounds = [[z.bounds for z in d[1]] for d in districts]
+    # districtBounds = [ziprender.getBoundingBox(d) for d in districtBounds]
+    
+    if len(zipcodes) != 0:
+        curr = zipcodes.pop()
+        curr.district = curr.neighbors[0].district
+        output.append(curr)
+        print(f'Putting {curr.zip} in district {curr.district} (leftover)...')
+
+
     # color and render
-    ziprender.colorByDistrict(output, ziprender.randomColors(currDistrict), 20)
+    ziprender.colorByDistrict(output, ziprender.randomColors(10, max=200), 15)
     #customColors = ['#4287f5', '#4287f5', '#dea350', '#c7d437', '#27de16', '#a0ebe7', '#9d25a1', '#918e90']
     #ziprender.colorByDistrict(output, [ziprender.colorHtmlToRgb(h) for h in customColors], 15)
 
     print('Remaining zipcodes:', len(zipcodes))
     print('Rendering...')
 
-    img = ziprender.renderZipCodes(output, 1000)
+    img = ziprender.renderZipCodes(output, 500)
     img.show()
         
 
