@@ -11,7 +11,7 @@ from PIL import Image
 from PIL import ImageOps
 from PIL import ImageDraw
 from random import randint
-import geoShapeWork
+import pyshpTest
 
 def makeTranslator(offsetX, offsetY, scale):
     '''Gets a function that performs a translate and a scale on coordinates.
@@ -65,12 +65,8 @@ def colorByDistrict(zips, colors, radius=0):
     else:
         # modify RGB by the same random amount per ZCTA
         for zcta in zips:
-            if zcta.district == 0:
-                zcta.color = '#ff0000'
-            else:
-                offset = randint(-radius, radius)
-                zcta.color = tuple(a + offset for a in colors[zcta.district-1])
-            
+            offset = randint(-radius, radius)
+            zcta.color = tuple(a + offset for a in colors[zcta.district-1])
 
 
 def colorByZip(zips, colors):
@@ -133,12 +129,11 @@ shpPath = os.path.join('MDdata',
                        'Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp')
 
 print("Reading shapefile...")
-data = geoShapeWork.readShapefile(shpPath)
-#records = pyshpTest.getRecords(shpPath)
-zipcodeList = geoShapeWork.createZipObjects(data)
-#totalPopulation = pyshpTest.getTotalPopulation(zipcodeList)
-#pyshpTest.startSplit(totalPopulation, zipcodeList)
-#pyshpTest.divideUp(zipcodeList, totalPopulation)
+shapes = pyshpTest.getShapes(shpPath)
+records = pyshpTest.getRecords(shpPath)
+zipcodeList = pyshpTest.createZipObjects(shapes, records)
+totalPopulation = pyshpTest.getTotalPopulation(zipcodeList)
+pyshpTest.startSplit(totalPopulation, zipcodeList)
 
 # customColors = ['#4287f5', '#4287f5', '#dea350', '#c7d437', '#27de16', '#a0ebe7', '#9d25a1', '#918e90']
 # colorByDistrict(zipcodeList, [colorHtmlToRgb(h) for h in customColors], 15)
