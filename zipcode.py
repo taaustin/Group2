@@ -1,5 +1,5 @@
-# Filname: zipcode.py
-# Overiview: class code for a 'Zipcode'
+# Filename: zipcode.py
+# Overview: class code for a 'Zipcode'
 # Written by: Todd Austin
 # Date: 3/26/2020
 # 

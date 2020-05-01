@@ -17,10 +17,6 @@ def readShapefile(filepath):
     data = gpd.read_file(shapefile)
     return data
 
-#used to sort the list of zipcodes from east to west
-def sortCentroid(e):
-    return str(e.centroid)
-
 def checkDistrict(zipcodeList, districtNum):
     for zipcode in zipcodeList:
         if zipcode.district == districtNum:
@@ -122,8 +118,8 @@ def createZipObjects(data):
                 else:
                     zipcode.checkNeighbors(zipcode2)
     totalPopulation = getTotalPopulation(zipcodeList)                
-    zipcodeList.sort(key=sortCentroid) #sorted east to west
-    createDistricts(zipcodeList, totalPopulation) #<<<<<---------------------------------------------
+    zipcodeList.sort(reverse=True, key=lambda z: z.centroid.x) #sorted east to west
+    #createDistricts(zipcodeList, totalPopulation) #<<<<<---------------------------------------------
     return zipcodeList
 
 def searchForZip(zipcodeToSearchFor, zipcodes):

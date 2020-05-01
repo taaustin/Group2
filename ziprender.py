@@ -1,5 +1,5 @@
-# Filname: ziprender.py
-# Overiview: Renders ZipCode objects
+# Filename: ziprender.py
+# Overview: Renders ZipCode objects
 # Written by: Dennis Dove
 # Date: 4/22/2020
 # 
@@ -65,11 +65,11 @@ def colorByDistrict(zips, colors, radius=0):
     else:
         # modify RGB by the same random amount per ZCTA
         for zcta in zips:
-            if zcta.district == 0:
-                zcta.color = '#ff0000'
-            else:
-                offset = randint(-radius, radius)
-                zcta.color = tuple(a + offset for a in colors[zcta.district-1])
+            # if zcta.district == 0:
+            #     zcta.color = '#ff0000'
+            # else:
+            offset = randint(-radius, radius)
+            zcta.color = tuple(a + offset for a in colors[zcta.district-1])
             
 
 
@@ -120,31 +120,31 @@ def renderZipCodes(zips, scale, background='black'):
     return ImageOps.flip(img)
 
 
-########################################################################
-# THIS SHOULD BE CALLED ELSEWHERE
-# All of this work should be done by the caller to renderZipCodes
-# 1. Read in shapefile
-# 2. Split by population
-# 3. Apply color
-# 3. Render
-# 4. Show/Save
-########################################################################
-shpPath = os.path.join('MDdata',
-                       'Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp')
+# ########################################################################
+# # THIS SHOULD BE CALLED ELSEWHERE
+# # All of this work should be done by the caller to renderZipCodes
+# # 1. Read in shapefile
+# # 2. Split by population
+# # 3. Apply color
+# # 3. Render
+# # 4. Show/Save
+# ########################################################################
+# shpPath = os.path.join('MDdata',
+#                        'Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp')
 
-print("Reading shapefile...")
-data = geoShapeWork.readShapefile(shpPath)
-#records = pyshpTest.getRecords(shpPath)
-zipcodeList = geoShapeWork.createZipObjects(data)
-#totalPopulation = pyshpTest.getTotalPopulation(zipcodeList)
-#pyshpTest.startSplit(totalPopulation, zipcodeList)
-#pyshpTest.divideUp(zipcodeList, totalPopulation)
+# print("Reading shapefile...")
+# data = geoShapeWork.readShapefile(shpPath)
+# #records = pyshpTest.getRecords(shpPath)
+# zipcodeList = geoShapeWork.createZipObjects(data)
+# #totalPopulation = pyshpTest.getTotalPopulation(zipcodeList)
+# #pyshpTest.startSplit(totalPopulation, zipcodeList)
+# #pyshpTest.divideUp(zipcodeList, totalPopulation)
 
-# customColors = ['#4287f5', '#4287f5', '#dea350', '#c7d437', '#27de16', '#a0ebe7', '#9d25a1', '#918e90']
-# colorByDistrict(zipcodeList, [colorHtmlToRgb(h) for h in customColors], 15)
-colorByDistrict(zipcodeList, randomColors(8), 15)
-# colorByZip(zipcodeList, randomColors(len(zipcodeList)))
+# # customColors = ['#4287f5', '#4287f5', '#dea350', '#c7d437', '#27de16', '#a0ebe7', '#9d25a1', '#918e90']
+# # colorByDistrict(zipcodeList, [colorHtmlToRgb(h) for h in customColors], 15)
+# colorByDistrict(zipcodeList, randomColors(8), 15)
+# # colorByZip(zipcodeList, randomColors(len(zipcodeList)))
 
-img = renderZipCodes(zipcodeList, scale=2000)
-img.show()
-# img.save('test.gif')
+# img = renderZipCodes(zipcodeList, scale=2000)
+# img.show()
+# # img.save('test.gif')
