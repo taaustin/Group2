@@ -92,7 +92,6 @@ class Map_Window:
             
         if response == Gtk.ResponseType.OK:
             text = "Image saved to " + dialog.get_filename()
-            #msg.set_label(text)
 
             # Try to save file to users file system, cannot save to
             # directories that the user does not have permission for
@@ -100,11 +99,9 @@ class Map_Window:
                 shutil.copyfile("etc/.tmp/" + fileName, dialog.get_filename())
             except:
                 text = "Error: " + str(sys.exc_info()[0])
-                #msg.set_label(text)
                 
         else:
             text = "Canceled: Image not saved"
-            #msg.set_label("Canceled: Image not saved")
 
         msg.set_markup("<span color='white'>" + text + "</span>") 
         box.show_all()

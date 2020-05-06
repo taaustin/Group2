@@ -17,7 +17,8 @@ from collections import defaultdict
 from shapely.geometry import Point, Polygon, MultiPolygon
 from shapely.ops import nearest_points
 sys.path.insert(1, "src")
-from geoShapeWork import readShapefile, createZipObjects, getTotalPopulation
+import geoShapeWork
+import cmd_int
 
 def makeTranslator(offsetX, offsetY, scale):
     '''Gets a function that performs a translate and a scale on coordinates.
@@ -194,24 +195,28 @@ def printDistrictStats(img, xy, zips):
 # # 3. Render
 # # 4. Show/Save
 # ########################################################################
-def main(shapePath, imagePath, zipColumn="ZCTA5CE10", popColumn="POP100", geoColumn="geometry"):
-    #filepath = "etc/MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
+def main(argv):
+    args = cmd_int.parseInput("ziprender.py", argv)
 
     print("Reading shapefile...")
-    data = readShapefile(shapePath)
+    data = geoShapeWork.readShapefile(args["inFile"])
 
     print("Creating zip objects...")
-    zips = createZipObjects(data, zipColumn, popColumn, geoColumn)
+    zips = geoShapeWork.createZipObjects(data, args["zipCol"], args["popCol"], args["geoCol"])
 
     print("Rendering map...")
     colors = randomColors(len(zips), 10, 190)
     colorByZip(zips, colors)
-    img = renderZipCodes(zips, scale=500, centroidRadius=4)
+    
+    img = renderZipCodes(zips, scale=args["scale"], centroidRadius=args["centRad"])
 
-    if imagePath == "":
+    if args["show"]:
         img.show()
-    else:
-        img.save(imagePath)
+    if args["save"] != None:
+        img.save(args["save"])
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:

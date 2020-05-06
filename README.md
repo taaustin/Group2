@@ -22,13 +22,13 @@ $ pip3 --version
     $ python3 md_dgm.py
     ```
 ###### Command-Line Interface
-- Generate map of ZCTAs:
+- View availible options for generating a map divided into ZCTAs:
     ```
-    $ python3 ziprender.py [filename]
+    $ python3 ziprender.py --help
     ```
-- Generate map of districts:
+- View availible options for generating a map divided into districts:
     ```
-    $ python3 zipdistrict.py [filename]
+    $ python3 zipdistrict.py --help
     ```
 ### Supported Operating Systems
 ###### Kali GNU/Linux Rolling (2020.1)

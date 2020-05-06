@@ -11,6 +11,7 @@ from sys import float_info
 
 sys.path.insert(1, "src")
 import ziprender
+import cmd_int
 from geoShapeWork import readShapefile, createZipObjects, getTotalPopulation
 
 def createConnectedGraph(zipcodes):
@@ -152,38 +153,30 @@ def cluster(zipcodes, numDistricts):
 
     return output
 
-    return output
-
-def main(shapePath, imagePath, numDistricts, zipColumn="ZCTA5CE10", popColumn="POP100", geoColumn="geometry"):
-    #filepath = "etc/MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
+def main(argv):
+    args = cmd_int.parseInput("zipdistrict.py", argv)
 
     print("Reading shapefile...")
-    data = readShapefile(shapePath)
+    data = readShapefile(args["inFile"])
 
     print("Creating zip objects...")
-    zips = createZipObjects(data, zipColumn, popColumn, geoColumn)
+    zipcodes = createZipObjects(data, args["zipCol"], args["popCol"], args["geoCol"])
 
     print("Creating connected graph...")
-    zips = createConnectedGraph(zips)
+    zips = createConnectedGraph(zipcodes)
 
     print("Generating districts...")
-    zips = cluster(zips, numDistricts)
+    output = cluster(zips, args["numDis"])
 
     print("Rendering map...")
-    colors = ziprender.randomColors(numDistricts, 10, 190)
-    ziprender.colorByDistrict(zips, colors, 15)
-    img = ziprender.renderZipCodes(zips, scale=500, centroidRadius=4)
-    
-    if imagePath == "":
+    colors = ziprender.randomColors(args["numDis"], 10, 190)
+    ziprender.colorByDistrict(output, colors, 15)
+    img = ziprender.renderZipCodes(output, scale=args["scale"], centroidRadius=args["centRad"])
+
+    if args["show"]:
         img.show()
-    else:
-        img.save(imagePath)
+    if args["save"] != None:
+        img.save(args["save"])
 
 if __name__ == "__main__":
-    if len(sys.argv) == 4:
-        main(sys.argv[1], sys.argv[2], int(sys.argv[3]))
-    elif len(sys.argv) == 7:
-        main(sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4], sys.argv[5], sys.argv[6])
-    else:
-        print(f'Invalid number of arguments: {len(sys.argv)}')
-        print(f'Usage: {sys.argv[0]} shapePath imagePath numDistricts [zipColumn] [popColumn] [geoColumn]')
+    main(sys.argv[1:])
