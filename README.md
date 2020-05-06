@@ -24,11 +24,11 @@ $ pip3 --version
 ###### Command-Line Interface
 - Generate map of ZCTAs:
     ```
-    $ python3 ziprender.py [filename]
+    $ python3 ziprender.py --help
     ```
 - Generate map of districts:
     ```
-    $ python3 zipdistrict.py [filename]
+    $ python3 zipdistrict.py --help
     ```
 ### Supported Operating Systems
 ###### Kali GNU/Linux Rolling (2020.1)
