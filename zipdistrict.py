@@ -154,26 +154,36 @@ def cluster(zipcodes, numDistricts):
 
     return output
 
-def main(fileName):
-    filepath = "etc/MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
+def main(shapePath, imagePath, numDistricts, zipColumn="ZCTA5CE10", popColumn="POP100", geoColumn="geometry"):
+    #filepath = "etc/MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
 
     print("Reading shapefile...")
-    data = readShapefile(filepath)
+    data = readShapefile(shapePath)
 
     print("Creating zip objects...")
-    zipcodes = createZipObjects(data)
+    zips = createZipObjects(data, zipColumn, popColumn, geoColumn)
 
     print("Creating connected graph...")
-    zipcodes = createConnectedGraph(zipcodes)
+    zips = createConnectedGraph(zips)
 
     print("Generating districts...")
-    output = cluster(zipcodes, 8)
+    zips = cluster(zips, numDistricts)
 
     print("Rendering map...")
-    ziprender.colorByDistrict(output, ziprender.randomColors(10, max=200), 15)
-    img = ziprender.renderZipCodes(output, scale=500, centroidRadius=4)
-    #img.save(fileName)
-    img.show()
+    colors = ziprender.randomColors(numDistricts, 10, 190)
+    ziprender.colorByDistrict(zips, colors, 15)
+    img = ziprender.renderZipCodes(zips, scale=500, centroidRadius=4)
+    
+    if imagePath == "":
+        img.show()
+    else:
+        img.save(imagePath)
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    if len(sys.argv) == 4:
+        main(sys.argv[1], sys.argv[2], int(sys.argv[3]))
+    elif len(sys.argv) == 7:
+        main(sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4], sys.argv[5], sys.argv[6])
+    else:
+        print(f'Invalid number of arguments: {len(sys.argv)}')
+        print(f'Usage: {sys.argv[0]} shapePath imagePath numDistricts [zipColumn] [popColumn] [geoColumn]')

@@ -13,9 +13,11 @@ from PIL import ImageOps
 from PIL import ImageDraw
 from PIL import ImageFont
 from random import randint
-
+from collections import defaultdict
+from shapely.geometry import Point, Polygon, MultiPolygon
+from shapely.ops import nearest_points
 sys.path.insert(1, "src")
-import geoShapeWork
+from geoShapeWork import readShapefile, createZipObjects, getTotalPopulation
 
 def makeTranslator(offsetX, offsetY, scale):
     '''Gets a function that performs a translate and a scale on coordinates.
@@ -131,6 +133,31 @@ def renderZipCodes(zips, scale, centroidRadius, background='black'):
         #draw.rectangle(tlbr, fill=z.centroidColor)
         # draw.text(center, z.zip, z.centroidColor)
 
+    dists = defaultdict(list)
+    colors = dict()
+
+    for z in zips:
+        #for poly in z.polyGeo:
+        colors[z.district] = z.centroidColor
+        if type(z.polyGeo) == Polygon:
+            dists[z.district].append(z.polyGeo)
+        elif type(z.polyGeo) == MultiPolygon:
+            for poly in z.polyGeo:
+                dists[z.district].append(poly)
+    
+    for dist, polys in dists.items():
+        print(f'District {dist} with {len(polys)} polygons..')
+        m = MultiPolygon(polys)
+        r = centroidRadius * 2
+
+        p1, p2 = nearest_points(m, m.centroid)
+
+
+        center = translate((p1.x, p1.y))
+        tlbr = (center[0] - r, center[1] - r,
+                center[0] + r, center[1] + r)
+        draw.rectangle(tlbr, colors[dist])
+
     # flip image vertically
     return ImageOps.flip(img)
 
@@ -155,6 +182,7 @@ def printDistrictStats(img, xy, zips):
         draw.text(xy, line, fill=colors[dist], font=font)
         xy = (xy[0], xy[1] + font.getsize(line)[1])
 
+    img.show()
     return img
 
 # ########################################################################
@@ -166,20 +194,30 @@ def printDistrictStats(img, xy, zips):
 # # 3. Render
 # # 4. Show/Save
 # ########################################################################
-def main(fileName):
-    shpPath = "etc/MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
+def main(shapePath, imagePath, zipColumn="ZCTA5CE10", popColumn="POP100", geoColumn="geometry"):
+    #filepath = "etc/MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
 
     print("Reading shapefile...")
-    data = geoShapeWork.readShapefile(shpPath)
-    #records = pyshpTest.getRecords(shpPath)
+    data = readShapefile(shapePath)
 
     print("Creating zip objects...")
-    zipcodeList = geoShapeWork.createZipObjects(data)
-    colorByZip(zipcodeList, randomColors(len(zipcodeList)))
+    zips = createZipObjects(data, zipColumn, popColumn, geoColumn)
 
-    img = renderZipCodes(zipcodeList, scale=2000)
-    img.save(fileName)
+    print("Rendering map...")
+    colors = randomColors(len(zips), 10, 190)
+    colorByZip(zips, colors)
+    img = renderZipCodes(zips, scale=500, centroidRadius=4)
+
+    if imagePath == "":
+        img.show()
+    else:
+        img.save(imagePath)
 
 if __name__ == "__main__":
-    main(sys.argv[1])
-
+    if len(sys.argv) == 3:
+        main(sys.argv[1], sys.argv[2])
+    elif len(sys.argv) == 6:
+        main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+    else:
+        print(f'Invalid number of arguments: {len(sys.argv)}')
+        print(f'Usage: {sys.argv[0]} shapePath imagePath [zipColumn] [popColumn] [geoColumn]')

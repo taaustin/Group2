@@ -105,10 +105,10 @@ def createDistricts(zipcodeList, totalPopulation):
         currentPopulation = 0
 
 #Creates objects, see zipcode.py for class details, uses class function to check for neighbors
-def createZipObjects(data):
+def createZipObjects(data, zipColumn="ZCTA5CE10", popColumn="POP100", geoColumn="geometry"):
     zipcodeList = []
     for index,row in data.iterrows():
-        zipObj = Zipcode(row["ZCTA5CE10"], row["POP100"], row["geometry"].centroid, row["geometry"])
+        zipObj = Zipcode(row[zipColumn], row[popColumn], row[geoColumn].centroid, row[geoColumn])
         zipcodeList.append(zipObj)
     for zipcode in zipcodeList:   
         for zipcode2 in zipcodeList:
