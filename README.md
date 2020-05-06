@@ -22,11 +22,11 @@ $ pip3 --version
     $ python3 md_dgm.py
     ```
 ###### Command-Line Interface
-- Generate map of ZCTAs:
+- View availible options for generating a map divided into ZCTAs:
     ```
     $ python3 ziprender.py --help
     ```
-- Generate map of districts:
+- View availible options for generating a map divided into districts:
     ```
     $ python3 zipdistrict.py --help
     ```
