@@ -168,18 +168,19 @@ def printDistrictStats(img, xy, zips):
 # # 4. Show/Save
 # ########################################################################
 def main(argv):
-    args = cmd_int.parseInput(argv)
-    shpPath = "etc/MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
+    args = cmd_int.parseInput("ziprender.py", argv)
 
     print("Reading shapefile...")
-    data = geoShapeWork.readShapefile(shpPath)
-    #records = pyshpTest.getRecords(shpPath)
+    data = geoShapeWork.readShapefile(args["inFile"])
 
     print("Creating zip objects...")
-    zipcodeList = geoShapeWork.createZipObjects(data)
-    colorByZip(zipcodeList, randomColors(len(zipcodeList)))
+    zips = geoShapeWork.createZipObjects(data, args["zipCol"], args["popCol"], args["geoCol"])
 
-    img = renderZipCodes(zipcodeList, scale=args["scale"], centroidRadius=args["centRad"])
+    print("Rendering map...")
+    colors = randomColors(len(zips), 10, 190)
+    colorByZip(zips, colors)
+    
+    img = renderZipCodes(zips, scale=args["scale"], centroidRadius=args["centRad"])
 
     if args["show"]:
         img.show()

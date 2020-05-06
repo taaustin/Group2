@@ -30,6 +30,7 @@ import md_map
 # that has already been generated this session. 
 class Warning(Gtk.Dialog):
     def __init__(self, parent, fileName):
+        print(fileName)
         Gtk.Dialog.__init__(self, title="Warning")
 
         self.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
@@ -39,7 +40,10 @@ class Warning(Gtk.Dialog):
         self.set_position(Gtk.WindowPosition.MOUSE)
         self.set_border_width(6)
         
-        label = Gtk.Label(label="WARNING\n\nMap has already been generated, this\nwill overwrite the contents of\n" + fileName + "\n\nDo you want to continue?\n\n")
+        label = Gtk.Label()
+        header = "<span font-size='large'> WARNING</span>"
+        body = "\n\nMap has already been generated, this\nwill overwrite the contents of\n" + fileName + "\n\nDo you want to continue?\n\n"
+        label.set_markup(header + body)
 
         box = self.get_content_area()
         box.add(label)
@@ -123,7 +127,8 @@ class MD_DGM_APP(Gtk.Window):
                 fileName = fileID.get_label()
                 
         # Display link to map window or display waring window
-        if overwrite_warning:
+        # if overwrite_warning:
+        if True:
             dialog = Warning(self, fileName)
             response = dialog.run()
             if response == Gtk.ResponseType.OK:

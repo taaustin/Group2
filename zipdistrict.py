@@ -154,23 +154,23 @@ def cluster(zipcodes, numDistricts):
     return output
 
 def main(argv):
-    args = cmd_int.parseInput(argv)
-    filepath = "etc/MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
+    args = cmd_int.parseInput("zipdistrict.py", argv)
 
     print("Reading shapefile...")
-    data = readShapefile(filepath)
+    data = readShapefile(args["inFile"])
 
     print("Creating zip objects...")
-    zipcodes = createZipObjects(data)
+    zipcodes = createZipObjects(data, args["zipCol"], args["popCol"], args["geoCol"])
 
     print("Creating connected graph...")
     zipcodes = createConnectedGraph(zipcodes)
 
     print("Generating districts...")
-    output = cluster(zipcodes, 8)
+    output = cluster(zipcodes, args["numDis"])
 
     print("Rendering map...")
-    ziprender.colorByDistrict(output, ziprender.randomColors(10, max=200), 15)
+    colors = ziprender.randomColors(args["numDis"], 10, 190)
+    ziprender.colorByDistrict(output, colors, 15)
     img = ziprender.renderZipCodes(output, scale=args["scale"], centroidRadius=args["centRad"])
 
     if args["show"]:
