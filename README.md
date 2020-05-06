@@ -22,7 +22,6 @@ $ pip3 --version
     $ python3 md_dgm.py
     ```
 ###### Command-Line Interface
-***THESE FEATURE NEED TO BE ADDED***
 - Generate map of ZCTAs:
     ```
     $ python3 ziprender.py [filename]
