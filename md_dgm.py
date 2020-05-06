@@ -8,6 +8,7 @@
 '''''''''''''''''''''''''''
 
 import os
+import sys
 import threading
 
 import gi
@@ -18,16 +19,20 @@ from PIL import Image
 from PIL import ImageOps
 from PIL import ImageDraw
 
+sys.path.insert(1, "src")
+sys.path.insert(1, "etc")
 import geoShapeWork
 import ziprender
 import zipdistrict
-import md_map
+import md_map 
 
 class MD_DGM_APP:
     # Initialize the home window from 'design_format.glade'
     def __init__(self):
+        if (not os.path.exists("etc/.tmp")):
+            os.mkdir("etc/.tmp")
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("design_format.glade")
+        self.builder.add_from_file("etc/design_format.glade")
         self.builder.connect_signals(self)
 
         self.builder.get_object("home_window").show_all()
@@ -35,28 +40,34 @@ class MD_DGM_APP:
 
     # Destroy home window on exit
     def on_home_destroy(self, *args):
+        for fileName in os.listdir("etc/.tmp/"):
+            os.remove("etc/.tmp/" + fileName)
         Gtk.main_quit()
         
     # Display a warning when the user wishes to generate a map that
     # that has already been generated this session. 
     def Warning_Window(self, *args):
+        home = self.builder.get_object("home_window").set_sensitive(False)
         window = self.builder.get_object("warning_window")
+        
         label = self.builder.get_object("event_content")
         self.fileName = args[0]
         self.build_districts = args[1]
         
-        text_str = "Data has already been generated, this\nwill overwrite the data in \"" + args[0] + "\"\n\nDo you want to continue?"
+        text_str = "Map has already been generated, this\nwill overwrite the contents of \"" + args[0] + "\"\n\nDo you want to continue?"
         
         label.set_label(text_str)
         window.show_all()
 
     # Exit warning window and signify to not overwrite
     def on_warning_quit_clicked(self, *args):
+        self.builder.get_object("home_window").set_sensitive(True)
         window = self.builder.get_object("warning_window")
         window.hide()
 
     # Exit warning window and signify overwrite
-    def on_warning_continue_clicked(self, *args):    
+    def on_warning_continue_clicked(self, *args):
+        self.builder.get_object("home_window").set_sensitive(True)
         window = self.builder.get_object("warning_window")
         files = self.builder.get_object("files")
         
@@ -65,6 +76,7 @@ class MD_DGM_APP:
                 files.remove(fileID)
 
         # Generate requested data
+        self.fileName = "etc/.tmp/" + self.fileName + ".jpeg"
         shapefile = threading.Thread(target=self.shapefile_thread, args=(self.fileName, self.build_districts))
         shapefile.daemon = True
         shapefile.start()
@@ -82,7 +94,7 @@ class MD_DGM_APP:
         # Determine whether to overwrite the file
         fileList = files.get_children()
         for fileID in fileList:
-            if fileID.get_label() == "districts_map.gif":
+            if fileID.get_label() == "districts_map":
                 overwrite_warning = True
                 fileName = fileID.get_label()
                 
@@ -90,7 +102,7 @@ class MD_DGM_APP:
         if overwrite_warning:
             self.Warning_Window(fileName, True)
         else:
-            shapefile = threading.Thread(target=self.shapefile_thread, args=("districts_map.gif", True))
+            shapefile = threading.Thread(target=self.shapefile_thread, args=("etc/.tmp/districts_map.jpeg", True))
             shapefile.daemon = True
             shapefile.start()
             
@@ -106,7 +118,7 @@ class MD_DGM_APP:
         # Determine whether to overwrite the file
         fileList = files.get_children()
         for fileID in fileList:
-            if fileID.get_label() == "zcta_map.gif":
+            if fileID.get_label() == "zcta_map":
                 overwrite_warning = True
                 fileName = fileID.get_label()
                 
@@ -114,7 +126,7 @@ class MD_DGM_APP:
         if overwrite_warning:
             self.Warning_Window(fileName, False)
         else:
-            shapefile = threading.Thread(target=self.shapefile_thread, args=("zcta_map.gif", False))
+            shapefile = threading.Thread(target=self.shapefile_thread, args=("etc/.tmp/zcta_map.jpeg", False))
             shapefile.daemon = True
             shapefile.start()
             
@@ -137,6 +149,10 @@ class MD_DGM_APP:
 
     # Add a link to the GUI for the user to open the generated map
     def add_link(self, fileName):
+        fileName = fileName.split("/")
+        fileName = fileName[2].split(".")
+        fileName = fileName[0]
+        
         files = self.builder.get_object("files")
         link = Gtk.LinkButton(label=fileName, uri=fileName)
         link.connect("clicked", self.open_map_window, fileName)
@@ -162,25 +178,34 @@ class MD_DGM_APP:
         GLib.idle_add(self.show_log)
         
         GLib.idle_add(self.update_log, "Gathering Data...")
-        shpPath = os.path.join('MDdata', 'Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp')
+        shpPath = "./etc/MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
 
         GLib.idle_add(self.update_log, "Reading Shapefile...")
         data = geoShapeWork.readShapefile(shpPath)
-
+        
         GLib.idle_add(self.update_log, "Building ZCTAs...")
-        zipcodeList = geoShapeWork.createZipObjects(data)
+        zipcodes = geoShapeWork.createZipObjects(data)
 
         if (args[1]):
-            GLib.idle_add(self.update_log, "Splitting By Population...")
-            zipcodeList = zipdistrict.cluster(zipcodeList, 8)
-            ziprender.colorByDistrict(zipcodeList, ziprender.randomColors(8, min=20, max=190), 20)
+            GLib.idle_add(self.update_log, "Creating connnected graph...")
+            zipcodes = zipdistrict.createConnectedGraph(zipcodes)
+
+            GLib.idle_add(self.update_log, "Splitting by population...")
+            output = zipdistrict.cluster(zipcodes, 8)
+
+            GLib.idle_add(self.update_log, "Coloring districts...")
+            ziprender.colorByDistrict(output, ziprender.randomColors(8), 15)
+
+            GLib.idle_add(self.update_log, "Rendering districts...")
+            img = ziprender.renderZipCodes(output, scale=2000, centroidRadius=15)
         else:
-            ziprender.colorByZip(zipcodeList, ziprender.randomColors(len(zipcodeList)))
-
-        GLib.idle_add(self.update_log, "Rendering ZCTAs...")
-        img = ziprender.renderZipCodes(zipcodeList, scale=2000, centroidRadius=15)
+            GLib.idle_add(self.update_log, "Coloring ZCTAs...")
+            ziprender.colorByZip(zipcodes, ziprender.randomColors(len(zipcodes)))
+            
+            GLib.idle_add(self.update_log, "Rendering ZCTAs...")
+            img = ziprender.renderZipCodes(zipcodes, scale=2000, centroidRadius=15)
+            
         img.save(args[0])
-
         GLib.idle_add(self.add_link, args[0])
 
 def main():

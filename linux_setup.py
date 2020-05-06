@@ -37,13 +37,13 @@ try:
     import shapely
 except:
     print("Installing shapely python module")
-    subprocess.call(["pip3", "install", "geopandas"])
-
-print("Verifying pyshp python module")
+    subprocess.call(["pip3", "install", "shapely"])
+    
+print("Verifying geopandas python module")
 try:
-    import shapefile
+    import geopandas
 except:
-    print("Installing pyshp python module")
-    subprocess.call(["pip3", "install", "pyshp"])
+    print("Installing geopandas python module")
+    subprocess.call(["pip3", "install", "geopandas"])
 
 print("Set up complete")

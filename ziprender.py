@@ -6,6 +6,7 @@
 # Purpose: Provides a set of functions that facilitate rendering of ZipCode objects to Pillow Image objects.
 
 import os
+import sys
 import math
 from PIL import Image
 from PIL import ImageOps
@@ -13,6 +14,8 @@ from PIL import ImageDraw
 from PIL import ImageFont
 from random import randint
 
+sys.path.insert(1, "src")
+import geoShapeWork
 
 def makeTranslator(offsetX, offsetY, scale):
     '''Gets a function that performs a translate and a scale on coordinates.
@@ -156,29 +159,27 @@ def printDistrictStats(img, xy, zips):
 
 # ########################################################################
 # # THIS SHOULD BE CALLED ELSEWHERE
-# # All of this work should be done by the caller to renderZipCodes
+# # All of this work should be done by the caller
 # # 1. Read in shapefile
 # # 2. Split by population
 # # 3. Apply color
 # # 3. Render
 # # 4. Show/Save
 # ########################################################################
-# shpPath = os.path.join('MDdata',
-#                        'Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp')
+def main(fileName):
+    shpPath = "etc/MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
 
-# print("Reading shapefile...")
-# data = geoShapeWork.readShapefile(shpPath)
-# #records = pyshpTest.getRecords(shpPath)
-# zipcodeList = geoShapeWork.createZipObjects(data)
-# #totalPopulation = pyshpTest.getTotalPopulation(zipcodeList)
-# #pyshpTest.startSplit(totalPopulation, zipcodeList)
-# #pyshpTest.divideUp(zipcodeList, totalPopulation)
+    print("Reading shapefile...")
+    data = geoShapeWork.readShapefile(shpPath)
+    #records = pyshpTest.getRecords(shpPath)
 
-# # customColors = ['#4287f5', '#4287f5', '#dea350', '#c7d437', '#27de16', '#a0ebe7', '#9d25a1', '#918e90']
-# # colorByDistrict(zipcodeList, [colorHtmlToRgb(h) for h in customColors], 15)
-# colorByDistrict(zipcodeList, randomColors(8), 15)
-# # colorByZip(zipcodeList, randomColors(len(zipcodeList)))
+    print("Creating zip objects...")
+    zipcodeList = geoShapeWork.createZipObjects(data)
+    colorByZip(zipcodeList, randomColors(len(zipcodeList)))
 
-# img = renderZipCodes(zipcodeList, scale=2000)
-# img.show()
-# # img.save('test.gif')
+    img = renderZipCodes(zipcodeList, scale=2000)
+    img.save(fileName)
+
+if __name__ == "__main__":
+    main(sys.argv[1])
+
