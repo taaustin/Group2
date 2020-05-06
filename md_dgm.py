@@ -26,7 +26,26 @@ import ziprender
 import zipdistrict
 import md_map 
 
-class MD_DGM_APP:
+# Display a warning when the user wishes to generate a map that
+# that has already been generated this session. 
+class Warning(Gtk.Dialog):
+    def __init__(self, parent, fileName):
+        Gtk.Dialog.__init__(self, title="Warning")
+
+        self.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                         Gtk.STOCK_OK, Gtk.ResponseType.OK)
+        self.set_default_size(250, 150)
+        self.set_decorated(False)
+        self.set_position(Gtk.WindowPosition.MOUSE)
+        self.set_border_width(6)
+        
+        label = Gtk.Label(label="WARNING\n\nMap has already been generated, this\nwill overwrite the contents of\n" + fileName + "\n\nDo you want to continue?\n\n")
+
+        box = self.get_content_area()
+        box.add(label)
+        self.show_all()
+
+class MD_DGM_APP(Gtk.Window):
     # Initialize the home window from 'design_format.glade'
     def __init__(self):
         if (not os.path.exists("etc/.tmp")):
@@ -44,46 +63,21 @@ class MD_DGM_APP:
             os.remove("etc/.tmp/" + fileName)
         Gtk.main_quit()
         
-    # Display a warning when the user wishes to generate a map that
-    # that has already been generated this session. 
-    def Warning_Window(self, *args):
-        home = self.builder.get_object("home_window").set_sensitive(False)
-        window = self.builder.get_object("warning_window")
-        
-        label = self.builder.get_object("event_content")
-        self.fileName = args[0]
-        self.build_districts = args[1]
-        
-        text_str = "Map has already been generated, this\nwill overwrite the contents of \"" + args[0] + "\"\n\nDo you want to continue?"
-        
-        label.set_label(text_str)
-        window.show_all()
-
-    # Exit warning window and signify to not overwrite
-    def on_warning_quit_clicked(self, *args):
-        self.builder.get_object("home_window").set_sensitive(True)
-        window = self.builder.get_object("warning_window")
-        window.hide()
 
     # Exit warning window and signify overwrite
     def on_warning_continue_clicked(self, *args):
-        self.builder.get_object("home_window").set_sensitive(True)
-        window = self.builder.get_object("warning_window")
         files = self.builder.get_object("files")
-        
         for fileID in files:
-            if fileID.get_label() == self.fileName:
+            if fileID.get_label() == args[0]:
                 files.remove(fileID)
 
         # Generate requested data
-        self.fileName = "etc/.tmp/" + self.fileName + ".jpeg"
-        shapefile = threading.Thread(target=self.shapefile_thread, args=(self.fileName, self.build_districts))
+        fileName = "etc/.tmp/" + args[0] + ".jpeg"
+        shapefile = threading.Thread(target=self.shapefile_thread, args=(fileName, args[1]))
         shapefile.daemon = True
         shapefile.start()
         self.builder.get_object("zcta_map_button").set_sensitive(False)
         self.builder.get_object("districts_map_button").set_sensitive(False)
-                
-        window.hide()
         
     # Generate map of districts based on ZCTA populations
     def on_districts_map_button_clicked(self, *args):
@@ -100,7 +94,13 @@ class MD_DGM_APP:
                 
         # Display link to map window or display waring window
         if overwrite_warning:
-            self.Warning_Window(fileName, True)
+            dialog = Warning(self, fileName)
+            response = dialog.run()
+            if response == Gtk.ResponseType.OK:
+                dialog.destroy()
+                self.on_warning_continue_clicked(fileName, True)
+            else:    
+                dialog.destroy()
         else:
             shapefile = threading.Thread(target=self.shapefile_thread, args=("etc/.tmp/districts_map.jpeg", True))
             shapefile.daemon = True
@@ -124,7 +124,13 @@ class MD_DGM_APP:
                 
         # Display link to map window or display waring window
         if overwrite_warning:
-            self.Warning_Window(fileName, False)
+            dialog = Warning(self, fileName)
+            response = dialog.run()
+            if response == Gtk.ResponseType.OK:
+                dialog.destroy()
+                self.on_warning_continue_clicked(fileName, False)
+            else:    
+                dialog.destroy()
         else:
             shapefile = threading.Thread(target=self.shapefile_thread, args=("etc/.tmp/zcta_map.jpeg", False))
             shapefile.daemon = True

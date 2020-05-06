@@ -11,6 +11,7 @@ from sys import float_info
 
 sys.path.insert(1, "src")
 import ziprender
+import cmd_int
 from geoShapeWork import readShapefile, createZipObjects, getTotalPopulation
 
 def createConnectedGraph(zipcodes):
@@ -152,9 +153,8 @@ def cluster(zipcodes, numDistricts):
 
     return output
 
-    return output
-
-def main(fileName):
+def main(argv):
+    args = cmd_int.parseInput(argv)
     filepath = "etc/MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
 
     print("Reading shapefile...")
@@ -171,9 +171,12 @@ def main(fileName):
 
     print("Rendering map...")
     ziprender.colorByDistrict(output, ziprender.randomColors(10, max=200), 15)
-    img = ziprender.renderZipCodes(output, scale=500, centroidRadius=4)
-    #img.save(fileName)
-    img.show()
+    img = ziprender.renderZipCodes(output, scale=args["scale"], centroidRadius=args["centRad"])
+
+    if args["show"]:
+        img.show()
+    if args["save"] != None:
+        img.save(args["save"])
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1:])

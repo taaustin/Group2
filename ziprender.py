@@ -16,6 +16,7 @@ from random import randint
 
 sys.path.insert(1, "src")
 import geoShapeWork
+import cmd_int
 
 def makeTranslator(offsetX, offsetY, scale):
     '''Gets a function that performs a translate and a scale on coordinates.
@@ -166,7 +167,8 @@ def printDistrictStats(img, xy, zips):
 # # 3. Render
 # # 4. Show/Save
 # ########################################################################
-def main(fileName):
+def main(argv):
+    args = cmd_int.parseInput(argv)
     shpPath = "etc/MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
 
     print("Reading shapefile...")
@@ -177,9 +179,13 @@ def main(fileName):
     zipcodeList = geoShapeWork.createZipObjects(data)
     colorByZip(zipcodeList, randomColors(len(zipcodeList)))
 
-    img = renderZipCodes(zipcodeList, scale=2000)
-    img.save(fileName)
+    img = renderZipCodes(zipcodeList, scale=args["scale"], centroidRadius=args["centRad"])
+
+    if args["show"]:
+        img.show()
+    if args["save"] != None:
+        img.save(args["save"])
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1:])
 
