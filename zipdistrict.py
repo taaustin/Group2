@@ -5,12 +5,14 @@
 # 
 # Purpose: Provides functions that can manage lists of ZipCode objects and split them into districts.
 
-from geoShapeWork import readShapefile, createZipObjects, getTotalPopulation
 from random import randint
-import ziprender
 from sys import float_info
 
 def createConnectedGraph(zipcodes):
+    '''Ensures all Zipcodes are connected via the neighbors property. Segments of the
+       graph are connected at the nearest pair of Zipcodes with each segment.
+       :param zipcodes: a list of Zipcode objects
+       :return: a connected list of Zipcode objects'''
     # get all disconnected graphs
     graphs = []
 
@@ -56,6 +58,12 @@ def createConnectedGraph(zipcodes):
 
 
 def getNeighborhood(zip, neighborhood, allZips):
+    '''Gets a list of all Zipcode objects connected to zip via the neighbors property.
+       The Zipcodes are removed from the allZips list upon discovery.
+       :param zip: the starting Zipcode object
+       :param neighborhood: a list of Zipcodes connected to zip
+       :param allZips: a list of all known Zipcode objects
+       :return: a list of Zipcode objects connected to this Zipcode'''
     neighborhood.append(zip)
     allZips.remove(zip)
 
@@ -64,15 +72,13 @@ def getNeighborhood(zip, neighborhood, allZips):
             getNeighborhood(n, neighborhood, allZips)
 
 
-def cluster():
-    k = 8
-    filepath = "./MDdata/Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp"
-    print("Reading shapefile...")
-    data = readShapefile(filepath)
-    print("Creating zip objects...")
-    zipcodes = createZipObjects(data)
-    totalPop = getTotalPopulation(zipcodes)
-    targetPop = totalPop / k
+def cluster(zipcodes, numDistricts):
+    '''Splits a list of Zipcode objects into districts with approximately equal population.
+       :param zipcodes: a list of Zipcode objects
+       :param numDistricts: the number of equal population districts that will be created
+       :return: a list of Zipcode objects each with an assigned district property'''
+    totalPop = sum([z.population for z in zipcodes])
+    targetPop = totalPop / numDistricts
     output = []
     
     print('Target district pop:', targetPop)
@@ -85,9 +91,9 @@ def cluster():
     queue = []
 
     queue.append(zipcodes[0])
-    print(f'Starting district from {zipcodes[0].zip} (seed)...')
+    print(f'Starting district {currDistrict} from {zipcodes[0].zip} (seed)...')
 
-    while len(queue) > 0 and currDistrict < k:
+    while len(queue) > 0 and currDistrict < numDistricts:
         if len(districts[currDistrict][1]) == 0:
             # nothing to compare against
             curr = queue.pop(0)
@@ -125,7 +131,7 @@ def cluster():
             districts.append([0, []])
             queue = []
             queue.append(zipcodes[0])
-            print(f'Starting district from {zipcodes[0].zip} (population)...')
+            print(f'Starting district {currDistrict} from {zipcodes[0].zip} (population)...')
     
         # see if there are no more contig. zips
         if len(queue) == 0 and len(zipcodes) != 0:
@@ -135,29 +141,26 @@ def cluster():
             districts.append([0, []])
             queue = []
             queue.append(zipcodes[0])
-            print(f'Starting district from {zipcodes[0].zip} (continuity)...')
+            print(f'Starting district {currDistrict} from {zipcodes[0].zip} (continuity)...')
     
     # add any remaining zips to nearest district
     # districtBounds = [[z.bounds for z in d[1]] for d in districts]
     # districtBounds = [ziprender.getBoundingBox(d) for d in districtBounds]
     
-    if len(zipcodes) != 0:
+    while len(zipcodes) != 0:
         curr = zipcodes.pop()
         curr.district = curr.neighbors[0].district
         output.append(curr)
         print(f'Putting {curr.zip} in district {curr.district} (leftover)...')
 
+    return output
 
-    # color and render
-    ziprender.colorByDistrict(output, ziprender.randomColors(10, max=200), 15)
-    #customColors = ['#4287f5', '#4287f5', '#dea350', '#c7d437', '#27de16', '#a0ebe7', '#9d25a1', '#918e90']
-    #ziprender.colorByDistrict(output, [ziprender.colorHtmlToRgb(h) for h in customColors], 15)
+# # color and render
+# ziprender.colorByDistrict(output, ziprender.randomColors(numDistricts, max=200), 15)
+# #customColors = ['#4287f5', '#4287f5', '#dea350', '#c7d437', '#27de16', '#a0ebe7', '#9d25a1', '#918e90']
+# #ziprender.colorByDistrict(output, [ziprender.colorHtmlToRgb(h) for h in customColors], 15)
 
-    print('Remaining zipcodes:', len(zipcodes))
-    print('Rendering...')
+# print('Rendering...')
 
-    img = ziprender.renderZipCodes(output, 500)
-    img.show()
-        
-
-cluster()
+# img = ziprender.renderZipCodes(output, 500)
+# img.show()

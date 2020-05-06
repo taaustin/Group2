@@ -18,8 +18,9 @@ from PIL import Image
 from PIL import ImageOps
 from PIL import ImageDraw
 
-import pyshpTest
+import geoShapeWork
 import ziprender
+import zipdistrict
 import md_map
 
 class MD_DGM_APP:
@@ -164,22 +165,20 @@ class MD_DGM_APP:
         shpPath = os.path.join('MDdata', 'Maryland_Census_Data__ZIP_Code_Tabulation_Areas_ZCTAs.shp')
 
         GLib.idle_add(self.update_log, "Reading Shapefile...")
-        shapes = pyshpTest.getShapes(shpPath)
-        records = pyshpTest.getRecords(shpPath)
-        
+        data = geoShapeWork.readShapefile(shpPath)
+
         GLib.idle_add(self.update_log, "Building ZCTAs...")
-        zipcodeList = pyshpTest.createZipObjects(shapes, records)
+        zipcodeList = geoShapeWork.createZipObjects(data)
 
         if (args[1]):
             GLib.idle_add(self.update_log, "Splitting By Population...")
-            totalPopulation = pyshpTest.getTotalPopulation(zipcodeList)
-            pyshpTest.startSplit(totalPopulation, zipcodeList)
-            ziprender.colorByDistrict(zipcodeList, ziprender.randomColors(8), 15)
+            zipcodeList = zipdistrict.cluster(zipcodeList, 8)
+            ziprender.colorByDistrict(zipcodeList, ziprender.randomColors(8, min=20, max=190), 20)
         else:
             ziprender.colorByZip(zipcodeList, ziprender.randomColors(len(zipcodeList)))
 
         GLib.idle_add(self.update_log, "Rendering ZCTAs...")
-        img = ziprender.renderZipCodes(zipcodeList, scale=2000)
+        img = ziprender.renderZipCodes(zipcodeList, scale=2000, centroidRadius=15)
         img.save(args[0])
 
         GLib.idle_add(self.add_link, args[0])

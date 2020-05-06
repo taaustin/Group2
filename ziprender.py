@@ -2,7 +2,7 @@
 # Overview: Renders ZipCode objects
 # Written by: Dennis Dove
 # Date: 4/22/2020
-# 
+#
 # Purpose: Provides a set of functions that facilitate rendering of ZipCode objects to Pillow Image objects.
 
 import os
@@ -10,8 +10,9 @@ import math
 from PIL import Image
 from PIL import ImageOps
 from PIL import ImageDraw
+from PIL import ImageFont
 from random import randint
-import geoShapeWork
+
 
 def makeTranslator(offsetX, offsetY, scale):
     '''Gets a function that performs a translate and a scale on coordinates.
@@ -37,9 +38,9 @@ def getBoundingBox(boundingBoxes):
         if box[0] < ret[0]:
             ret[0] = box[0]
         if box[1] < ret[1]:
-            ret[1] = box[1]   
+            ret[1] = box[1]
         if box[2] > ret[2]:
-            ret[2] = box[2]    
+            ret[2] = box[2]
         if box[3] > ret[3]:
             ret[3] = box[3]
 
@@ -62,7 +63,7 @@ def colorByDistrict(zips, colors, radius=0):
         # simple assignment
         for zcta in zips:
             zcta.color = colors[zcta.district-1]
-            zcta.centroidColor = tuple(a + 75 for a in zcta.color)
+            zcta.centroidColor = tuple(a + 100 for a in zcta.color)
     else:
         # modify RGB by the same random amount per ZCTA
         for zcta in zips:
@@ -71,7 +72,7 @@ def colorByDistrict(zips, colors, radius=0):
             # else:
             offset = randint(-radius, radius)
             zcta.color = tuple(a + offset for a in colors[zcta.district-1])
-            zcta.centroidColor = tuple(a + 75 for a in zcta.color)
+            zcta.centroidColor = tuple(a + 100 for a in zcta.color)
 
 
 def colorByZip(zips, colors):
@@ -80,7 +81,8 @@ def colorByZip(zips, colors):
        :param colors: a list of RGB tuples'''
     for zcta in zips:
         zcta.color = colors[int(zcta.zip) % len(colors)]  # [0-1329]
-        zcta.centroidColor = tuple(a + 75 for a in zcta.color)
+        zcta.centroidColor = tuple(a + 100 for a in zcta.color)
+
 
 def colorHtmlToRgb(color):
     '''Converts an hex HTML color code to an RGB tuple.
@@ -91,13 +93,13 @@ def colorHtmlToRgb(color):
     return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
 
 
-def renderZipCodes(zips, scale, background='black'):
+def renderZipCodes(zips, scale, centroidRadius, background='black'):
     '''Renders a list of ZipCode objects to a new PIL.Image.
        :param zips: a list of ZipCode objects
        :param scale: a scaling factor for the output
        :param background: the background color for the image
        :return: a PIL.Image object with the rendered map.'''
-    print("Rendering zip codes...")
+    print(f"Rendering {len(zips)} zip codes...")
 
     # Get a bounding box for all geometry
     boxList = [z.bounds for z in zips]
@@ -119,16 +121,38 @@ def renderZipCodes(zips, scale, background='black'):
             draw.polygon(points, z.color)
 
         # dot at center
-        r = 2
         center = translate((z.centroid.x, z.centroid.y))
-        tlbr = (center[0] - r, center[1] - r, center[0] + r, center[1] + r)        
+        tlbr = (center[0] - centroidRadius, center[1] - centroidRadius,
+                center[0] + centroidRadius, center[1] + centroidRadius)
         draw.ellipse(tlbr, z.centroidColor)
+        #draw.rectangle(tlbr, fill=z.centroidColor)
         # draw.text(center, z.zip, z.centroidColor)
-        
-    
+
     # flip image vertically
     return ImageOps.flip(img)
 
+def printDistrictStats(img, xy, zips):
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype('UbuntuMono-R.ttf', size=100)
+    
+    pops = dict()
+    colors = dict()
+
+    for z in zips:
+        oldPop = pops.get(z.district, 0)
+        pops[z.district] = oldPop + z.population
+
+        if oldPop == 0:
+            colors[z.district] = z.color
+
+
+    for dist, pop in pops.items():
+        line = f"District {dist}: {pop}"
+
+        draw.text(xy, line, fill=colors[dist], font=font)
+        xy = (xy[0], xy[1] + font.getsize(line)[1])
+
+    return img
 
 # ########################################################################
 # # THIS SHOULD BE CALLED ELSEWHERE
