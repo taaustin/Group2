@@ -21,7 +21,7 @@ $ pip3 --version
     ```
     $ python3 md_dgm.py
     ```
-###### Command-Line Interface
+##### Command-Line Interface
 ***This interface is experimental, results are not guaranteed to be accurate***
 - View availible options for generating a map divided into ZCTAs:
     ```
