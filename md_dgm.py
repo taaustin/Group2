@@ -127,7 +127,7 @@ class MD_DGM_APP(Gtk.Window):
                 
         # Display link to map window or display waring window
         # if overwrite_warning:
-        if True:
+        if overwrite_warning:
             dialog = Warning(self, fileName)
             response = dialog.run()
             if response == Gtk.ResponseType.OK:
