@@ -4,9 +4,9 @@ def printHelp(pgName):
     print("Usage: python3 " + pgName + ".py [Options]...")
     print("Requirements:")
     print("\t1. Either \'--show\', \'--save\', or both must be specified")
-    print("\t2. The center point radius must be less than 1/3 the size of the scale")
+    print("\t2. The center point radius must be between 1-20 inclusive")
     if pgName == "zipdistrict.py":
-        print("\t3. Number of districts must be between 1 and 400 inclusive")
+        print("\t3. Number of districts must be between 1 and 8 inclusive")
     print("Avaible Options:")
     print("\t--show : Display map in default graphics application")
     print("\t--save [Path] : Save map, supported file formats include: jpeg, png, gif")
@@ -81,6 +81,8 @@ def parseInput(pgName, argv):
             index = argv.index("-c")
             try:
                 centRad = int(argv[index+1])
+                if centRad < 0 or centRad > 20:
+                    raise Exception()
             except:
                 print("err: Invalid centroid radius provided")
                 sys.exit()
@@ -89,11 +91,11 @@ def parseInput(pgName, argv):
             checkMult("-c", argv)
             i += 1
 
-        elif pgName == "zipdistricts.py" and "-d" in argv:
+        elif pgName == "zipdistrict.py" and "-d" in argv:
             index = argv.index("-d")
             try:
                 numDis = int(argv[index+1])
-                if numDis < 1 or numDis > 400:
+                if numDis < 1 or numDis > 8:
                     raise Exception()
             except:
                 print("err: Invalid number of districts provides")
@@ -154,8 +156,5 @@ def parseInput(pgName, argv):
     if args["show"] == False and args["save"] == None:
         print("err: Either \'--show\', \'--save\', or both must be specified")
         sys.exit()
-    elif args["centRad"] > args["scale"]/3:
-        print("err: Center point radius is to large")
-        sys.exit()
-        
+           
     return args
