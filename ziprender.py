@@ -218,6 +218,7 @@ def main(argv):
 if __name__ == "__main__":
     main(sys.argv[1:])
 
+'''''''''''''''''''''''''''''''''''''''
 if __name__ == "__main__":
     if len(sys.argv) == 3:
         main(sys.argv[1], sys.argv[2])
@@ -226,3 +227,4 @@ if __name__ == "__main__":
     else:
         print(f'Invalid number of arguments: {len(sys.argv)}')
         print(f'Usage: {sys.argv[0]} shapePath imagePath [zipColumn] [popColumn] [geoColumn]')
+'''''''''''''''''''''''''''''''''''''''

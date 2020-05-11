@@ -14,13 +14,21 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GdkPixbuf
 
-# Contains all open map windows
-map_windows = {}
+map_windows = {} # Contains all open map windows
 
+'''''''''''''''''''''''''''''''''''''''''
+# Map_Window : Load display from 'map_format.glade' and display the map
+#              specified by the user
+'''''''''''''''''''''''''''''''''''''''''
 class Map_Window:
-    # Retrieve window to display the user choosen map
-    # @args[0] : String that contains the file file name of the map
+
+    '''''''''''''''''''''''''''''''''''''''''''''''
+    # __init__() : Default constructor
+    # @args[0] : String that contains the file name of the map
     #            to open
+    # Return : Map window is displayed and added the global 
+    #          dictionary 'map_windows'
+    '''''''''''''''''''''''''''''''''''''''''''''''
     def __init__(self, *args):
         self.builder = Gtk.Builder()
         self.builder.add_from_file("etc/map_format.glade")
@@ -40,26 +48,42 @@ class Map_Window:
             
         window.show_all()
 
-    # Unminimize window or bring to the front
+    ''''''''''''''''''''''''''''''''''''''''''''''''''
+    # bring_front() : Unminimize window or bring to the front
+    # Return : Map window is displayed
+    ''''''''''''''''''''''''''''''''''''''''''''''''''
     def bring_front(self):
         window = self.builder.get_object("map_window")
         window.deiconify()
 
-    # Removes file name from gloabal array map_windows
+    ''''''''''''''''''''''''''''''''''''''''''''''''''
+    # on_map_delete() : Removes file name from gloabal array map_windows
+    # Return : Map window no longer exists
+    ''''''''''''''''''''''''''''''''''''''''''''''''''
     def on_map_delete(self, *args):
         global map_windows
         fileName = self.builder.get_object("map_window").get_title()
         del map_windows[fileName]
 
+    ''''''''''''''''''''''''''''''''''''''''''''''''
+    # on_close_msg_box() : Handles the event when the massage box in the bottom
+    #                      left corner is closed
+    # Return : Message box is deleted from the ma window
+    ''''''''''''''''''''''''''''''''''''''''''''''''
     def on_close_msg_box(self, *args):
         map_overlay = self.builder.get_object("map_overlay")
         map_overlay.remove(map_overlay.get_children()[1])
     
-    # Creates a dialog that allows a user to specify a folder and filename
-    # to which they wish to save the image file
+    ''''''''''''''''''''''''''''''''''''''''''''''''''
+    # on_map_save_clicked() : Creates a dialog that allows a user to specify a folder and filename
+    #                         to which they wish to save the image file
+    # Return : Dialog is destroyed and message box is displayed
+    ''''''''''''''''''''''''''''''''''''''''''''''''''
     def on_map_save_clicked(self, *args):
         fileName = self.builder.get_object("map_window").get_title()
         fileName += ".jpeg"
+
+        # Set dialog format
         dialog = Gtk.FileChooserDialog(title="Save file",
                                        parent=self.builder.get_object("map_window"),
                                        action=Gtk.FileChooserAction.SAVE)
@@ -70,8 +94,10 @@ class Map_Window:
 
         dialog.set_do_overwrite_confirmation(True)
         dialog.set_current_name(fileName)
-        
+
         response = dialog.run()
+
+        # Update or create message dialog box
         map_overlay = self.builder.get_object("map_overlay")
         if (len(map_overlay.get_children()) < 2):
             box = Gtk.HBox(spacing=10)
@@ -89,7 +115,8 @@ class Map_Window:
         else:
             box = map_overlay.get_children()[1]
             msg = box.get_children()[1]
-            
+
+        # Attempt to save the file to the specified location
         if response == Gtk.ResponseType.OK:
             text = "Image saved to " + dialog.get_filename()
 
@@ -107,8 +134,12 @@ class Map_Window:
         box.show_all()
         dialog.destroy()
 
-    # For this function to work properly it requires that the pillow image file
-    # saved has a scale of 2000 
+    '''''''''''''''''''''''''''''''''''''''''''''''''''
+    # on_map_zoomIn_clicked() : Enlarge the map currently displayed within the map window
+    # Note : For this function to work properly it requires that the pillow image file
+    #        saved has a scale of 2000
+    # Return : Map image is enlarged creating the illusion that it has been zoomed in
+    '''''''''''''''''''''''''''''''''''''''''''''''''''
     def on_map_zoomIn_clicked(self, *args):
         map_img = self.builder.get_object("map_img")
         img = map_img.get_children()[0]
@@ -129,8 +160,12 @@ class Map_Window:
             map_img.add(image)
             map_img.show_all()
 
-    # For this function to work properly it requires that the pillow image file
-    # saved has a scale of 2000 
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''
+    # on_map_zoomOut_clicked() : Shrink the map currently display within the map window
+    # Note : For this function to work properly it requires that the pillow image file
+    #        saved has a scale of 2000 
+    # Return : Map image is shrunk creating the illusion that it has been zoomed out
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''
     def on_map_zoomOut_clicked(self, *args):
         map_img = self.builder.get_object("map_img")
         img = map_img.get_children()[0]
