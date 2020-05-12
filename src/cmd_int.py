@@ -136,9 +136,14 @@ def parseInput(pgName, argv):
         elif "-f" in argv:
             index = argv.index("-f")
             try:
-                args["inFile"] = argv[index+1]
+                inFile = argv[index+1]
+                fileArr = inFile.split('.')
+                if fileArr[len(fileArr)-1] != "shp":
+                    raise Exception()
+    
+                args["inFile"] = inFile
             except:
-                print("err: Invalid Number of parameters")
+                print("err: Invalid file name provided")
                 sys.exit()
             argv.remove("-f")
             checkMult("-f", argv)
@@ -174,7 +179,7 @@ def parseInput(pgName, argv):
                 print("err: Invalid Number of parameters")
                 sys.exit()
             argv.remove("-g")
-            checkMult("-g")
+            checkMult("-g", argv)
             i += 1
             
         else:
