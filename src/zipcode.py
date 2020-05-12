@@ -10,12 +10,14 @@ from shapely.geometry import Polygon, MultiPolygon
 import numpy as np
 
 class Zipcode():
+    #Initial setup of the Zipcode object.
     def __init__(self, zip, population, centroid, polyGeo):
         self.zip = zip
         self.population = population
         self.centroid = centroid
         self.polyGeo = polyGeo
         self.geolist = np.array(self.polyGeo)
+        #Adding chuncks to geometries for various different parts of zipcode.
         self.geometry = []
         if self.geolist.size <= 1:
             chunk = []
@@ -35,6 +37,7 @@ class Zipcode():
                 self.geometry.append(chunk)
         bbox = self.polyGeo.bounds
         self.bounds = bbox
+        #list of neighbors
         self.neighbors = []
         self.added = False
         self.checked = False
@@ -44,12 +47,11 @@ class Zipcode():
     #the intersects function takes two geometries (aka 2 zipcodes outline coordinates) and 
     #returns true or false if they touch
     def checkNeighbors(self, zipcode):
-        
-        
+        #checks intersecion and adds the zipcodes to eachother's neighbors list.        
         if self.polyGeo.intersects(zipcode.polyGeo):
             self.neighbors.append(zipcode)
             zipcode.neighbors.append(self)
-         #print("Neighbor Found")
+         
 
     #Print information on a zipcode
     def printInformation(self):
