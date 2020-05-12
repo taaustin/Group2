@@ -37,5 +37,6 @@ $ pip3 --version
 ###### Ubuntu 18.04.3 LTS (Bionic Beaver)
 - Spinner appears but does not spin
 - Unable to open 2 map windows at the same time
+- Open windows do not unminimize within GUI, must unminimize from navigation bar
 ###### Ubuntu 20.04 LTS (Focal Fossa)
 - Open windows do not unminimize within GUI, must unminimize from navigation bar
