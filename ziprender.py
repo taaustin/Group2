@@ -163,6 +163,10 @@ def renderZipCodes(zips, scale, centroidRadius, background='black'):
     return ImageOps.flip(img)
 
 def printDistrictStats(img, xy, zips):
+    '''Prints a list of ZipCode statistics to an existing PIL.Image.
+       :param img: a PIL.Image object to print to
+       :param xy: a tuple containing x and y coordinates
+       :param zips: a list of ZipCode objects'''
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype('UbuntuMono-R.ttf', size=100)
     
@@ -196,6 +200,8 @@ def printDistrictStats(img, xy, zips):
 # # 4. Show/Save
 # ########################################################################
 def main(argv):
+    '''A command line interface for this map rendering module
+       :param argv: a list of command line arguments'''
     args = cmd_int.parseInput("ziprender.py", argv)
 
     print("Reading shapefile...")
@@ -210,6 +216,7 @@ def main(argv):
     
     img = renderZipCodes(zips, scale=args["scale"], centroidRadius=args["centRad"])
 
+    # either save to a file or show on screen
     if args["show"]:
         img.show()
     if args["save"] != None:

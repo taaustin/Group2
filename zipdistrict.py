@@ -79,6 +79,9 @@ def getNeighborhood(zip, neighborhood, allZips):
 
 
 def cluster(zipcodes, numDistricts):
+    '''Groups a list of Zipcode objects into several compact and contiguous clusters based on population.
+       :param zipcodes: a list of Zipcode objects to be clustered
+       :param numDistricts: the number of clusters that will be formed'''
     totalPop = sum([z.population for z in zipcodes])
     targetPop = totalPop / numDistricts
                    
@@ -154,6 +157,8 @@ def cluster(zipcodes, numDistricts):
     return output
 
 def main(argv):
+    '''Command line interface for the districting and rendering algorithms
+       :param argv: a list of command line arguments'''
     args = cmd_int.parseInput("zipdistrict.py", argv)
 
     print("Reading shapefile...")
@@ -173,6 +178,7 @@ def main(argv):
     ziprender.colorByDistrict(output, colors, 15)
     img = ziprender.renderZipCodes(output, scale=args["scale"], centroidRadius=args["centRad"])
 
+    # either display or save to file
     if args["show"]:
         img.show()
     if args["save"] != None:
